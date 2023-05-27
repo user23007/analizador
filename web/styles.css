@@ -1,0 +1,17 @@
+.container {
+    margin-bottom: 20px;
+  }
+  
+  label {
+    font-weight: bold;
+  }
+  
+  textarea, input {
+    margin-bottom: 10px;
+  }
+  
+  button {
+    display: block;
+    margin-bottom: 10px;
+  }
+  
