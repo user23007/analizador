@@ -49,7 +49,7 @@ def main():
         entrada = input("Ingrese una cadena a analizar (deje en blanco para finalizar): ")
         if not entrada:
             break
-        if analyze_string(entrada, tabla_analisis):
+        if analyze_string(diccionario, tabla_analisis, entrada):
             print("si")
         else:
             print("no")
@@ -88,10 +88,10 @@ def is_ll1_grammar(grammar):
     return True
 
 
-
 def calculate_first_sets(grammar):
     for A in grammar.keys():
         calculate_first_set(A, grammar)
+
 
 def calculate_first_set(symbol, grammar):
     if symbol in lista_terminales:
@@ -113,14 +113,15 @@ def calculate_first_set(symbol, grammar):
     return first_set
 
 
-def calculate_follow_sets(start_symbol, grammar):
-    diccionario_follow[start_symbol] = set(['$'])  # Agregamos el símbolo de fin de cadena al conjunto Follow del símbolo inicial
+def calculate_follow_sets(grammar):
+    diccionario_follow['S'] = set(['$'])  # Agregamos el símbolo de fin de cadena al conjunto Follow del símbolo inicial
 
     for symbol in grammar.keys():
         calculate_follow_set(symbol, grammar)
 
+
 def calculate_follow_set(symbol, grammar):
-    if symbol == start_symbol:
+    if symbol == 'S':
         return diccionario_follow[symbol]  # El conjunto Follow del símbolo inicial ya ha sido calculado previamente
 
     follow_set = set()
@@ -147,13 +148,12 @@ def calculate_follow_set(symbol, grammar):
     return follow_set
 
 
-
 def build_syntax_table(grammar):
     syntax_table = {}
 
     for non_terminal, productions in grammar.items():
         for production in productions:
-            first_set = calculate_first_set(production)
+            first_set = calculate_first_set(production, grammar)
 
             for symbol in first_set:
                 if symbol != epsilom:
@@ -166,7 +166,6 @@ def build_syntax_table(grammar):
                     syntax_table[(non_terminal, symbol)] = production
 
     return syntax_table
-
 
 
 def analyze_string(grammar, syntax_table, string):
@@ -192,8 +191,6 @@ def analyze_string(grammar, syntax_table, string):
             return False  # No se encontró una coincidencia en la tabla de análisis
 
     return i == len(string)  # La cadena se analizó correctamente si se llegó al final
-
-
 
 
 if __name__ == "__main__":
