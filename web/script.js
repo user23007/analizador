@@ -1,3 +1,7 @@
+let firstSets = {};
+let followSets = {};
+let haveDoneFirstSets = false;
+
 function readGrammar() {
     let grammarText = document.getElementById("grammar").value;
     let productions = grammarText.split("\n");
@@ -177,24 +181,166 @@ function eliminateDirectRecursion(nonTerminal, grammar) {
     }
 }
 
+function calculateFollowSets(grammar, startSymbol) {
+    const followSets = {};
 
-function showSets(set) {
-    let resultDiv = document.getElementById("result");
+
+    // Calcular el conjunto Follow de cada símbolo no terminal
+    for (const nonTerminal in grammar) {
+        if (grammar.hasOwnProperty(nonTerminal)) {
+            calculateFollowSet(nonTerminal, grammar, followSets, startSymbol);
+        }
+    }
+
+    return followSets;
+}
+
+
+function calculateFollowSet(symbol, grammar, followSets, startSymbol) {
+    // Verificar si el símbolo ya fue calculado
+    if (followSets.hasOwnProperty(symbol)) {
+        return;
+    }
+
+    const followSet = [];
+
+    // Recorrer todas las producciones de la gramática
+    for (const nonTerminal in grammar) {
+        if (grammar.hasOwnProperty(nonTerminal)) {
+            const productions = grammar[nonTerminal];
+
+            // Recorrer cada producción para buscar el símbolo en cuestión
+            for (const production of productions) {
+                const symbolIndex = production.indexOf(symbol);
+
+                // Si el símbolo no está presente en la producción, continuar con la siguiente producción
+                if (symbolIndex === -1) {
+                    continue;
+                }
+
+                // Si el símbolo está al final de la producción, calcular el conjunto Follow del símbolo no terminal
+                // al cual pertenece la producción y agregarlo al conjunto Follow del símbolo actual
+                if (symbolIndex === production.length - 1) {
+                    // Evitar ciclos infinitos al calcular el conjunto Follow del símbolo actual
+                    if (nonTerminal !== symbol) {
+                        calculateFollowSet(nonTerminal, grammar, followSets, startSymbol);
+                        const followOfNonTerminal = followSets[nonTerminal];
+
+                        // Agregar los símbolos del conjunto Follow del símbolo no terminal al conjunto Follow del símbolo actual
+                        for (const followSymbol of followOfNonTerminal) {
+                            if (!followSet.includes(followSymbol)) {
+                                followSet.push(followSymbol);
+                            }
+                        }
+                    }
+                }
+                // Si el símbolo no está al final de la producción, agregar los símbolos siguientes al conjunto Follow del símbolo actual
+                else {
+                    const nextSymbol = production[symbolIndex + 1];
+
+                    // Si el siguiente símbolo es un terminal, agregarlo al conjunto Follow del símbolo actual
+                    if (isTerminal(nextSymbol)) {
+                        if (!followSet.includes(nextSymbol)) {
+                            followSet.push(nextSymbol);
+                        }
+                    }
+                    // Si el siguiente símbolo es un no terminal, calcular su conjunto First
+                    // y agregar los símbolos excepto el símbolo de epsilon (#) al conjunto Follow del símbolo actual
+                    else if (grammar.hasOwnProperty(nextSymbol)) {
+                        calculateFirstSet(nextSymbol, grammar, {});
+
+                        for (const firstSymbol of firstSets[nextSymbol]) {
+                            if (firstSymbol !== '#' && !followSet.includes(firstSymbol)) {
+                                followSet.push(firstSymbol);
+                            }
+                        }
+
+                        // Si el conjunto First del siguiente símbolo contiene el símbolo de epsilon (#),
+                        // agregar el conjunto Follow del símbolo no terminal al conjunto Follow del símbolo actual
+                        if (firstSets[nextSymbol].includes('#')) {
+                            // Evitar ciclos infinitos al calcular el conjunto Follow del símbolo actual
+                            if (nonTerminal !== symbol) {
+                                calculateFollowSet(nonTerminal, grammar, followSets, startSymbol);
+                                const followOfNonTerminal = followSets[nonTerminal];
+
+                                for (const followSymbol of followOfNonTerminal) {
+                                    if (!followSet.includes(followSymbol)) {
+                                        followSet.push(followSymbol);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (symbol === startSymbol) {
+        followSet.push('$');
+      }
+
+    // Almacenar el conjunto Follow del símbolo actual en el objeto followSets
+    followSets[symbol] = followSet;
+}
+
+
+function getStartSymbol() {
+    let grammarText = document.getElementById("grammar").value;
+    let startSymbol = grammarText[0]
+    return startSymbol;
+}
+
+
+function showFirstSets(set) {
+    let resultDiv = document.getElementById("firstResult");
     resultDiv.innerHTML = "";
 
     for (let nonTerminal in set) {
         // Eliminar las producciones recursivas del first
         if (!nonTerminal.endsWith("'")) {
             resultDiv.innerHTML += "<p>First(" + nonTerminal + ") = {" + set[nonTerminal].join(", ") + "}</p>";
+        } else {
+            resultDiv.innerHTML += "<p>First(" + nonTerminal + ") = {" + set[nonTerminal].join(", ") + "} <b>Produccion creada para la eliminacion de la recursion por izquierda</b></p>";
+        }
+    }
+}
+
+function showFollowSets(set) {
+    let resultDiv = document.getElementById("followResult");
+    resultDiv.innerHTML = "";
+
+    for (let nonTerminal in set) {
+        // Eliminar las producciones recursivas del first
+        if (!nonTerminal.endsWith("'")) {
+            resultDiv.innerHTML += "<p>Follow(" + nonTerminal + ") = {" + set[nonTerminal].join(", ") + "}</p>";
+        } else {
+            resultDiv.innerHTML += "<p>Follow(" + nonTerminal + ") = {" + set[nonTerminal].join(", ") + "} <b>Produccion creada para la eliminacion de la recursion por izquierda</b></p>";
         }
     }
 }
 
 function firstButton() {
     let grammar = readGrammar();
-    let firstSets = calculateFirstSets(grammar);
-    showSets(firstSets);
+    let newFirstSets = calculateFirstSets(grammar);
+    showFirstSets(newFirstSets);
+    firstSets = newFirstSets;
+    haveDoneFirstSets = true;
 }
+
+function followButton() {
+    if (haveDoneFirstSets) {
+        let grammar = readGrammar();
+        let startSymbol = getStartSymbol();
+        let newFollowSets = calculateFollowSets(grammar, startSymbol);
+        showFollowSets(newFollowSets);
+        followSets = newFollowSets;
+    } else {
+        alert("Debes calcular los conjuntos First antes de calcular los de Follow");
+    }
+
+}
+
 
 // function main() {
 //     let grammar = readGrammar();
