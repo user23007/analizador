@@ -8,6 +8,9 @@ function readGrammar() {
     let grammar = {};
 
     for (let i = 0; i < productions.length; i++) {
+        if(productions[i] == ""){
+            alert("No dejes lineas en blanco");
+        }
         let noBlank = productions[i].replace(/\s/g, "");
         let production = noBlank.trim().split(">");
         let nonTerminal = production[0];
