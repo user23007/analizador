@@ -1,6 +1,7 @@
 let firstSets = {};
 let followSets = {};
 let haveDoneFirstSets = false;
+let haveDoneFollowSets = false;
 
 function readGrammar() {
     let grammarText = document.getElementById("grammar").value;
@@ -324,6 +325,11 @@ function showFollowSets(set) {
 }
 
 function firstButton() {
+    //Limpiamos los follow anteriores
+    document.getElementById("followResult").innerHTML = "";
+    haveDoneFollowSets = false;
+    followSets = {};
+
     let grammar = readGrammar();
     let newFirstSets = calculateFirstSets(grammar);
     showFirstSets(newFirstSets);
@@ -338,18 +344,12 @@ function followButton() {
         let newFollowSets = calculateFollowSets(grammar, startSymbol);
         showFollowSets(newFollowSets);
         followSets = newFollowSets;
+        haveDoneFollowSets = true;
     } else {
         alert("Debes calcular los conjuntos First antes de calcular los de Follow");
     }
 
 }
-
-
-// function main() {
-//     let grammar = readGrammar();
-//     firstSet = calculateFirstSet(grammar);
-// }
-// window.addEventListener('load', main);
 
 
 
