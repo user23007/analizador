@@ -2,9 +2,14 @@ let firstSets = {};
 let followSets = {};
 let grammarFixed = {};
 let isLl1 = false;
+let grammarTable = {};
+let StringIsValid = false;
+
 let haveDoneFirstSets = false;
 let haveDoneFollowSets = false;
 let haveDoneValidation = false;
+let haveDoneTable = false;
+let haveDoneStringAnalyze = false;
 
 function readGrammar() {
     let grammarText = document.getElementById("grammar").value;
@@ -376,40 +381,78 @@ function calculateProductionFirstSet(production, firstSets) {
 
 function generateTable(grammar) {
     const parsingTable = {};
-  
+
     for (const nonTerminal in grammar) {
-      if (grammar.hasOwnProperty(nonTerminal)) {
-        const productions = grammar[nonTerminal];
-  
-        for (const production of productions) {
-          const firstSet = calculateProductionFirstSet(production, firstSets);
-  
-          for (const terminal of firstSet) {
-            if (terminal !== '#') {
-              if (!parsingTable.hasOwnProperty(nonTerminal)) {
-                parsingTable[nonTerminal] = {};
-              }
-              parsingTable[nonTerminal][terminal] = production;
+        if (grammar.hasOwnProperty(nonTerminal)) {
+            const productions = grammar[nonTerminal];
+
+            for (const production of productions) {
+                const firstSet = calculateProductionFirstSet(production, firstSets);
+
+                for (const terminal of firstSet) {
+                    if (terminal !== '#') {
+                        if (!parsingTable.hasOwnProperty(nonTerminal)) {
+                            parsingTable[nonTerminal] = {};
+                        }
+                        parsingTable[nonTerminal][terminal] = production;
+                    }
+                }
+
+                if (firstSet.has('#')) {
+                    const followSet = followSets[nonTerminal];
+
+                    for (const terminal of followSet) {
+                        if (!parsingTable.hasOwnProperty(nonTerminal)) {
+                            parsingTable[nonTerminal] = {};
+                        }
+                        parsingTable[nonTerminal][terminal] = production;
+                    }
+                }
             }
-          }
-  
-          if (firstSet.has('#')) {
-            const followSet = followSets[nonTerminal];
-  
-            for (const terminal of followSet) {
-              if (!parsingTable.hasOwnProperty(nonTerminal)) {
-                parsingTable[nonTerminal] = {};
-              }
-              parsingTable[nonTerminal][terminal] = production;
-            }
-          }
         }
-      }
     }
-  
+
     return parsingTable;
-  }
-  
+}
+
+function analyzeString(input, grammar, startSymbol, parsingTable) {
+    const stack = [startSymbol];
+    let currentSymbol = stack.pop();
+    let inputIndex = 0;
+
+    while (currentSymbol !== undefined) {
+        if (isTerminal(currentSymbol)) {
+            if (currentSymbol === input[inputIndex]) {
+                inputIndex++;
+                currentSymbol = stack.pop();
+            } else {
+                return false; // El símbolo actual no coincide con el símbolo de entrada
+            }
+        } else if (grammar.hasOwnProperty(currentSymbol)) {
+            let production = "";
+            if (input[inputIndex] === undefined) {
+                production = parsingTable[currentSymbol]["$"];
+            } else {
+                production = parsingTable[currentSymbol][input[inputIndex]];
+            }
+            if (production) {
+                if (production === '#') {
+                    currentSymbol = stack.pop();
+                } else {
+                    const symbols = production.split('').reverse();
+                    stack.push(...symbols);
+                    currentSymbol = stack.pop();
+                }
+            } else {
+                return false; // No se encontró una producción en la tabla de análisis
+            }
+        } else {
+            return false; // El símbolo actual no es ni terminal ni no terminal válido
+        }
+    }
+
+    return inputIndex === input.length;
+}
 
 
 function showFirstSets(set) {
@@ -448,61 +491,71 @@ function showIsll1(isLl1) {
         resultDiv.innerHTML = "<p style='color: red'>No es LL(1)<p>";
     }
 }
-  
+
 function showTable(table) {
     const tableResult = document.getElementById('tableResult');
-  
+
     // Crear la estructura de la tabla
     const tableElement = document.createElement('table');
     tableElement.classList.add('ll1-table');
-  
+
     // Obtener los no terminales y terminales
     const nonTerminals = Object.keys(table);
     const terminals = new Set();
-  
+
     for (const nonTerminal in table) {
-      const productions = table[nonTerminal];
-      Object.keys(productions).forEach((terminal) => {
-        terminals.add(terminal);
-      });
+        const productions = table[nonTerminal];
+        Object.keys(productions).forEach((terminal) => {
+            terminals.add(terminal);
+        });
     }
-  
+
     // Crear la primera fila de terminales
     const terminalsRow = document.createElement('tr');
     terminalsRow.appendChild(createTableCell(''));
-  
+
     for (const terminal of terminals) {
-      terminalsRow.appendChild(createTableCell(terminal));
+        terminalsRow.appendChild(createTableCell(terminal));
     }
-  
+
     // Agregar la primera fila de terminales a la tabla
     tableElement.appendChild(terminalsRow);
-  
+
     // Crear las filas con las producciones correspondientes
     for (const nonTerminal of nonTerminals) {
-      const productionsRow = document.createElement('tr');
-      productionsRow.appendChild(createTableCell(nonTerminal));
-  
-      for (const terminal of terminals) {
-        const production = table[nonTerminal][terminal] || '';
-        productionsRow.appendChild(createTableCell(production));
-      }
-  
-      // Agregar la fila de producciones a la tabla
-      tableElement.appendChild(productionsRow);
+        const productionsRow = document.createElement('tr');
+        productionsRow.appendChild(createTableCell(nonTerminal));
+
+        for (const terminal of terminals) {
+            const production = table[nonTerminal][terminal] || '';
+            productionsRow.appendChild(createTableCell(production));
+        }
+
+        // Agregar la fila de producciones a la tabla
+        tableElement.appendChild(productionsRow);
     }
-  
+
     // Limpiar el contenedor y agregar la tabla
     tableResult.innerHTML = '';
     tableResult.appendChild(tableElement);
-  }
-  
-  function createTableCell(content) {
+}
+
+function createTableCell(content) {
     const cell = document.createElement('td');
     cell.textContent = content;
     return cell;
-  }
-    
+}
+
+function showAnalyzeString(isValid) {
+    let resultDiv = document.getElementById("stringResult");
+    let string = document.getElementById("inputString").value;
+    if (isValid) {
+        resultDiv.innerHTML = "<p>" + string + " SI hace parte del diccionario de la gramatica<p>";
+    } else {
+        resultDiv.innerHTML = "<p>" + string + " NO hace parte del diccionario de la gramatica<p>";
+    }
+}
+
 
 // function resetGrammar(){
 //     document.getElementById("followResult").innerHTML = "";
@@ -553,13 +606,33 @@ function ll1Button() {
 
 function tableButton() {
     if (isLl1) {
-        let grammar = readGrammar();
+        let grammar = grammarFixed;
         let newTable = generateTable(grammar);
         showTable(newTable);
-    } else if(!haveDoneValidation) {
+        grammarTable = newTable;
+        haveDoneTable = true;
+    } else if (!haveDoneValidation) {
         alert("Debes validar si la gramatica es LL(1) primero");
     } else {
         alert("La gramatica no es LL(1)");
+    }
+}
+
+function stringButton() {
+    if (haveDoneTable) {
+        let input = document.getElementById("inputString").value;
+        if (input === "") {
+            alert("Debes ingresar alguna cadena para analizarla");
+        } else {
+            let grammar = grammarFixed;
+            let startSymbol = getStartSymbol();
+            let newStringValid = analyzeString(input, grammar, startSymbol, grammarTable);
+            showAnalyzeString(newStringValid);
+            StringIsValid = newStringValid;
+            haveDoneStringAnalyze = true;
+        }
+    } else {
+        alert("Debes crear la tabla de LL(1) primero");
     }
 }
 
