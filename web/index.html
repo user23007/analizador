@@ -7,30 +7,54 @@
 </head>
 
 <body>
-  <h1>Top Down LL(1) Parser</h1>
-  <div class="container" id="form">
-    <label for="grammar">Gramática:</label>
-    <textarea id="grammar" rows="5"></textarea>
-    <button onclick="firstButton()">Calcular First</button>
-    <button onclick="followButton()">Calcular Follow</button>
-    <button onclick="ll1Button()">Verificar LL(1)</button>
-    <button onclick="tableButton()">Generar tabla</button>
-    <label for="inputString">Cadena:</label>
-    <input type="text" id="inputString">
-    <button onclick="stringButton()">Analizar cadena</button>
+  <h1>Top-down Analyzer</h1>
+  <div class="container">
+    <div class="section">
+      <div class="section-title">Cargar Gramática</div>
+      <div class="section-content">
+        <div class="input-container">
+          <label for="grammar-input">Gramática:</label>
+          <textarea id="grammar-input" rows="6"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">First y Follow</div>
+      <div class="section-content">
+        <button id="calculate-first-button" class="button" onclick="firstButton()">Calcular First</button>
+        <button id="calculate-follow-button" class="button" onclick="followButton()">Calcular Follow</button>
+        <div class="results">
+          <div id="firstResult"></div>
+          <div id="followResult"></div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Validar LL(1)</div>
+      <div class="section-content">
+        <button id="validate-ll1-button" class="button" onclick="ll1Button()">Validar</button>
+        <div id="ll1-validation-result"></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Tabla LL(1)</div>
+      <div class="section-content table-container">
+        <button id="table-button" class="button" onclick="tableButton()">Calcular tabla</button>
+        <id id="ll1-table-result"></id>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Análisis de Cadenas</div>
+      <div class="section-content">
+        <div class="input-container">
+          <label for="input-string">Cadena:</label>
+          <input id="input-string" type="text">
+        </div>
+        <button id="analyze-string-button" class="button" onclick="stringButton()">Analizar Cadena</button>
+        <div id="string-analysis-result"></div>
+      </div>
+    </div>
   </div>
-  <div class="container" id="results">
-    <div id="firstResult"></div>
-    <br />
-    <div id="followResult"></div>
-    <br />
-    <div id="isLl1Result"></div>
-    <br />
-    <div id="tableResult"></div>
-    <br/>
-    <div id="stringResult"></div>
-  </div>
-
   <script src="script.js"></script>
 </body>
 

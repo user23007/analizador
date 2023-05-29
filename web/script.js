@@ -12,7 +12,7 @@ let haveDoneTable = false;
 let haveDoneStringAnalyze = false;
 
 function readGrammar() {
-    let grammarText = document.getElementById("grammar").value;
+    let grammarText = document.getElementById("grammar-input").value;
     let productions = grammarText.split("\n");
     let grammar = {};
 
@@ -311,7 +311,7 @@ function calculateFollowSet(symbol, grammar, followSets, startSymbol, processedN
 
 
 function getStartSymbol() {
-    let grammarText = document.getElementById("grammar").value;
+    let grammarText = document.getElementById("grammar-input").value;
     let startSymbol = grammarText[0]
     return startSymbol;
 }
@@ -484,7 +484,7 @@ function showFollowSets(set) {
 }
 
 function showIsll1(isLl1) {
-    let resultDiv = document.getElementById("isLl1Result");
+    let resultDiv = document.getElementById("ll1-validation-result");
     if (isLl1) {
         resultDiv.innerHTML = "<p style='color: green'>Si es LL(1)<p>";
     } else {
@@ -493,7 +493,7 @@ function showIsll1(isLl1) {
 }
 
 function showTable(table) {
-    const tableResult = document.getElementById('tableResult');
+    const tableResult = document.getElementById('ll1-table-result');
 
     // Crear la estructura de la tabla
     const tableElement = document.createElement('table');
@@ -547,8 +547,8 @@ function createTableCell(content) {
 }
 
 function showAnalyzeString(isValid) {
-    let resultDiv = document.getElementById("stringResult");
-    let string = document.getElementById("inputString").value;
+    let resultDiv = document.getElementById("string-analysis-result");
+    let string = document.getElementById("input-string").value;
     if (isValid) {
         resultDiv.innerHTML = "<p>" + string + " SI hace parte del diccionario de la gramatica<p>";
     } else {
@@ -620,7 +620,7 @@ function tableButton() {
 
 function stringButton() {
     if (haveDoneTable) {
-        let input = document.getElementById("inputString").value;
+        let input = document.getElementById("input-string").value;
         if (input === "") {
             alert("Debes ingresar alguna cadena para analizarla");
         } else {

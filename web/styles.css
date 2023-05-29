@@ -1,19 +1,111 @@
-#tableResult table {
-  width: 50%;
-  border-collapse: collapse;
+body {
+  background-color: #f5f5f5;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
 }
 
-#tableResult th,
-#tableResult td {
+h1 {
+  color: #3498db;
+}
+
+.container {
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  color: #3498db;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.section-content {
+  background-color: #ececec;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  margin-top: 20px;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid #a2a1a1;
   padding: 8px;
   text-align: left;
-  border: 1px solid black;
 }
 
-#tableResult th:first-child {
-  background-color: #f2f2f2;
+th {
+  background-color: #3498db;
+  color: #fff;
+  font-weight: bold;
 }
 
-#tableResult tr:nth-child(even) {
-  background-color: #e6e6e6;
+tr:first-child {
+  font-weight: bold;
 }
+
+td:first-child {
+  font-weight: bold;
+}
+
+.button {
+  background-color: #3498db;
+  border: none;
+  border-radius: 3px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 8px 12px;
+}
+
+.button:hover {
+  background-color: #2980b9;
+}
+
+.input-container {
+  margin-bottom: 10px;
+}
+
+.input-container label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.input-container input[type="text"] {
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 5px;
+  width: 100%;
+}
+
+.result-container {
+  display: flex;
+}
+
+.result-container > div {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.results{
+  width: 400px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
