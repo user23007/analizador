@@ -660,6 +660,7 @@ document.getElementById("grammar-input").addEventListener("input", function () {
     document.getElementById("ll1-validation-result").innerHTML = "";
     document.getElementById("followResult").innerHTML = "";
     document.getElementById("firstResult").innerHTML = "";
+    document.getElementById("item0Result").innerHTML = "";git
 });
 
 
