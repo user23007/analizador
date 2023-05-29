@@ -550,26 +550,37 @@ function showAnalyzeString(isValid) {
     let resultDiv = document.getElementById("string-analysis-result");
     let string = document.getElementById("input-string").value;
     if (isValid) {
-        resultDiv.innerHTML = "<p>" + string + " SI hace parte del diccionario de la gramatica<p>";
+        resultDiv.innerHTML = "<p>'" + string + "' SI hace parte del diccionario de la gramatica<p>";
     } else {
-        resultDiv.innerHTML = "<p>" + string + " NO hace parte del diccionario de la gramatica<p>";
+        resultDiv.innerHTML = "<p>'" + string + "' NO hace parte del diccionario de la gramatica<p>";
     }
 }
 
 
-// function resetGrammar(){
-//     document.getElementById("followResult").innerHTML = "";
-//     document.getElementById("firstResult").innerHTML = "";
-//     firstSets = {};
-//     followSets = {};
-// }
+document.getElementById("grammar-input").addEventListener("input", function () {
+    firstSets = {};
+    followSets = {};
+    grammarFixed = {};
+    isLl1 = false;
+    grammarTable = {};
+    StringIsValid = false;
+
+    haveDoneFirstSets = false;
+    haveDoneFollowSets = false;
+    haveDoneValidation = false;
+    haveDoneTable = false;
+    haveDoneStringAnalyze = false;
+
+    document.getElementById("string-analysis-result").innerHTML = "";
+    document.getElementById("ll1-table-result").innerHTML = "";
+    document.getElementById("input-string").value = "";
+    document.getElementById("ll1-validation-result").innerHTML = "";
+    document.getElementById("followResult").innerHTML = "";
+    document.getElementById("firstResult").innerHTML = "";
+});
+
 
 function firstButton() {
-    //Limpiamos los follow anteriores
-    document.getElementById("followResult").innerHTML = "";
-    haveDoneFollowSets = false;
-    followSets = {};
-
     let grammar = readGrammar();
     let newFirstSets = calculateFirstSets(grammar);
     showFirstSets(newFirstSets);
