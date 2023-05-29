@@ -7,13 +7,14 @@
 </head>
 
 <body>
-  <h1>Conjunto First</h1>
+  <h1>Top Down LL(1) Parser</h1>
   <div class="container" id="form">
     <label for="grammar">Gramática:</label>
     <textarea id="grammar" rows="5"></textarea>
     <button onclick="firstButton()">Calcular First</button>
     <button onclick="followButton()">Calcular Follow</button>
     <button onclick="ll1Button()">Verificar LL(1)</button>
+    <button onclick="tableButton()">Generar tabla</button>
     <!-- <label for="inputString">Cadena:</label>
     <input type="text" id="inputString"> -->
   </div>
@@ -21,7 +22,10 @@
     <div id="firstResult"></div>
     <br />
     <div id="followResult"></div>
+    <br />
     <div id="isLl1Result"></div>
+    <br />
+    <div id="tableResult"></div>
   </div>
 
   <script src="script.js"></script>

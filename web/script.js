@@ -1,8 +1,10 @@
 let firstSets = {};
 let followSets = {};
-let grammarFixed = {}
+let grammarFixed = {};
+let isLl1 = false;
 let haveDoneFirstSets = false;
 let haveDoneFollowSets = false;
+let haveDoneValidation = false;
 
 function readGrammar() {
     let grammarText = document.getElementById("grammar").value;
@@ -128,7 +130,7 @@ function isTerminal(symbol) {
     return /^(?!.*[A-Z'])(?!.*[hA-Z]'$).*$/.test(symbol);
 }
 
-function eliminateLeftRecursion(grammar) {  
+function eliminateLeftRecursion(grammar) {
     const nonTerminals = Object.keys(grammar);
 
     for (let i = 0; i < nonTerminals.length; i++) {
@@ -189,118 +191,118 @@ function eliminateDirectRecursion(nonTerminal, grammar) {
 
 function calculateFollowSets(grammar, startSymbol) {
     const followSets = {};
-  
+
     // Calcular el conjunto Follow de cada símbolo no terminal
     for (const nonTerminal in grammar) {
-      if (grammar.hasOwnProperty(nonTerminal)) {
-        calculateFollowSet(nonTerminal, grammar, followSets, startSymbol);
-      }
+        if (grammar.hasOwnProperty(nonTerminal)) {
+            calculateFollowSet(nonTerminal, grammar, followSets, startSymbol);
+        }
     }
-  
-    return followSets;
-  }
 
-  function calculateFollowSet(symbol, grammar, followSets, startSymbol, processedNonTerminals = []) {
+    return followSets;
+}
+
+function calculateFollowSet(symbol, grammar, followSets, startSymbol, processedNonTerminals = []) {
     // Verificar si el símbolo ya fue calculado
     if (followSets.hasOwnProperty(symbol)) {
-      return;
+        return;
     }
-  
+
     const followSet = [];
-  
+
     // Marcar el símbolo actual como procesado para evitar bucles infinitos
     processedNonTerminals.push(symbol);
-  
+
     // Recorrer todas las producciones de la gramática
     for (const nonTerminal in grammar) {
-      if (grammar.hasOwnProperty(nonTerminal)) {
-        const productions = grammar[nonTerminal];
-  
-        // Recorrer cada producción para buscar el símbolo en cuestión
-        for (const production of productions) {
-          const symbolIndex = production.indexOf(symbol);
-  
-          // Si el símbolo no está presente en la producción, continuar con la siguiente producción
-          if (symbolIndex === -1) {
-            continue;
-          }
-  
-          // Si el símbolo está al final de la producción
-          if (symbolIndex === production.length - 1) {
-            // Si el no terminal de la producción ya fue procesado, omitir su cálculo de Follow
-            if (processedNonTerminals.includes(nonTerminal)) {
-              continue;
-            }
-  
-            // Calcular el conjunto Follow del no terminal de la producción
-            calculateFollowSet(nonTerminal, grammar, followSets, startSymbol, processedNonTerminals);
-            const followOfNonTerminal = followSets[nonTerminal];
-  
-            // Agregar los símbolos del conjunto Follow del no terminal al conjunto Follow del símbolo actual
-            for (const followSymbol of followOfNonTerminal) {
-              if (!followSet.includes(followSymbol)) {
-                followSet.push(followSymbol);
-              }
-            }
-          }
-          // Si el símbolo no está al final de la producción
-          else {
-            const nextSymbol = production[symbolIndex + 1];
-  
-            // Si el siguiente símbolo es un terminal, agregarlo al conjunto Follow del símbolo actual
-            if (isTerminal(nextSymbol)) {
-              if (!followSet.includes(nextSymbol)) {
-                followSet.push(nextSymbol);
-              }
-            }
-            // Si el siguiente símbolo es un no terminal, calcular su conjunto First
-            // y agregar los símbolos excepto el símbolo de epsilon (#) al conjunto Follow del símbolo actual
-            else if (grammar.hasOwnProperty(nextSymbol)) {
-              calculateFirstSet(nextSymbol, grammar, {});
-  
-              for (const firstSymbol of firstSets[nextSymbol]) {
-                if (firstSymbol !== '#' && !followSet.includes(firstSymbol)) {
-                  followSet.push(firstSymbol);
+        if (grammar.hasOwnProperty(nonTerminal)) {
+            const productions = grammar[nonTerminal];
+
+            // Recorrer cada producción para buscar el símbolo en cuestión
+            for (const production of productions) {
+                const symbolIndex = production.indexOf(symbol);
+
+                // Si el símbolo no está presente en la producción, continuar con la siguiente producción
+                if (symbolIndex === -1) {
+                    continue;
                 }
-              }
-  
-              // Si el conjunto First del siguiente símbolo contiene el símbolo de epsilon (#),
-              // agregar el conjunto Follow del símbolo no terminal al conjunto Follow del símbolo actual
-              if (firstSets[nextSymbol].includes('#')) {
-                // Evitar ciclos infinitos al calcular el conjunto Follow del símbolo actual
-                if (!processedNonTerminals.includes(nonTerminal) && nonTerminal !== startSymbol) {
-                  calculateFollowSet(nonTerminal, grammar, followSets, startSymbol, processedNonTerminals);
-                  const followOfNonTerminal = followSets[nonTerminal];
-  
-                  // Agregar los símbolos del conjunto Follow del no terminal al conjunto Follow del símbolo actual
-                  for (const followSymbol of followOfNonTerminal) {
-                    if (!followSet.includes(followSymbol)) {
-                      followSet.push(followSymbol);
+
+                // Si el símbolo está al final de la producción
+                if (symbolIndex === production.length - 1) {
+                    // Si el no terminal de la producción ya fue procesado, omitir su cálculo de Follow
+                    if (processedNonTerminals.includes(nonTerminal)) {
+                        continue;
                     }
-                  }
+
+                    // Calcular el conjunto Follow del no terminal de la producción
+                    calculateFollowSet(nonTerminal, grammar, followSets, startSymbol, processedNonTerminals);
+                    const followOfNonTerminal = followSets[nonTerminal];
+
+                    // Agregar los símbolos del conjunto Follow del no terminal al conjunto Follow del símbolo actual
+                    for (const followSymbol of followOfNonTerminal) {
+                        if (!followSet.includes(followSymbol)) {
+                            followSet.push(followSymbol);
+                        }
+                    }
                 }
-              }
+                // Si el símbolo no está al final de la producción
+                else {
+                    const nextSymbol = production[symbolIndex + 1];
+
+                    // Si el siguiente símbolo es un terminal, agregarlo al conjunto Follow del símbolo actual
+                    if (isTerminal(nextSymbol)) {
+                        if (!followSet.includes(nextSymbol)) {
+                            followSet.push(nextSymbol);
+                        }
+                    }
+                    // Si el siguiente símbolo es un no terminal, calcular su conjunto First
+                    // y agregar los símbolos excepto el símbolo de epsilon (#) al conjunto Follow del símbolo actual
+                    else if (grammar.hasOwnProperty(nextSymbol)) {
+                        calculateFirstSet(nextSymbol, grammar, {});
+
+                        for (const firstSymbol of firstSets[nextSymbol]) {
+                            if (firstSymbol !== '#' && !followSet.includes(firstSymbol)) {
+                                followSet.push(firstSymbol);
+                            }
+                        }
+
+                        // Si el conjunto First del siguiente símbolo contiene el símbolo de epsilon (#),
+                        // agregar el conjunto Follow del símbolo no terminal al conjunto Follow del símbolo actual
+                        if (firstSets[nextSymbol].includes('#')) {
+                            // Evitar ciclos infinitos al calcular el conjunto Follow del símbolo actual
+                            if (!processedNonTerminals.includes(nonTerminal) && nonTerminal !== startSymbol) {
+                                calculateFollowSet(nonTerminal, grammar, followSets, startSymbol, processedNonTerminals);
+                                const followOfNonTerminal = followSets[nonTerminal];
+
+                                // Agregar los símbolos del conjunto Follow del no terminal al conjunto Follow del símbolo actual
+                                for (const followSymbol of followOfNonTerminal) {
+                                    if (!followSet.includes(followSymbol)) {
+                                        followSet.push(followSymbol);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-          }
         }
-      }
     }
-  
+
     if (symbol === startSymbol && !followSet.includes('$')) {
-      followSet.push('$');
+        followSet.push('$');
     }
     else if (followSet.length === 0) {
-      followSet.push('$');
+        followSet.push('$');
     }
-  
+
     // Almacenar el conjunto Follow del símbolo actual en el objeto followSets
     followSets[symbol] = followSet;
-  
+
     // Eliminar el símbolo actual de los no terminales procesados
     processedNonTerminals.pop();
-  }
-  
-  
+}
+
+
 
 
 function getStartSymbol() {
@@ -311,66 +313,103 @@ function getStartSymbol() {
 
 function isLL1Grammar(grammar, startSymbol) {
     for (const nonTerminal in grammar) {
+        if (grammar.hasOwnProperty(nonTerminal)) {
+            const productions = grammar[nonTerminal];
+
+            // Verificar si hay ambigüedad en los conjuntos First de las producciones
+            const firstSetsOfProductions = productions.map(production => calculateProductionFirstSet(production, firstSets));
+            const unionOfFirstSets = new Set();
+
+            for (const firstSet of firstSetsOfProductions) {
+                for (const symbol of firstSet) {
+                    if (unionOfFirstSets.has(symbol)) {
+                        // Hay intersección en los conjuntos First de las producciones
+                        return false;
+                    }
+                    unionOfFirstSets.add(symbol);
+                }
+            }
+
+            for (const production of productions) {
+                const productionFirstSet = calculateProductionFirstSet(production, firstSets);
+
+                if (productionFirstSet.has('#')) {
+                    const followSet = followSets[nonTerminal];
+                    const intersection = new Set([...productionFirstSet].filter(x => followSet.includes(x)));
+
+                    if (intersection.size > 0) {
+                        // Hay intersección entre el conjunto First de una producción y el conjunto Follow del símbolo no terminal
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+function calculateProductionFirstSet(production, firstSets) {
+    const firstSet = new Set();
+
+    for (const symbol of production) {
+        if (isTerminal(symbol)) {
+            firstSet.add(symbol);
+            break;
+        } else {
+            const symbolFirstSet = firstSets[symbol];
+
+            for (const symbol of symbolFirstSet) {
+                if (symbol !== '#') {
+                    firstSet.add(symbol);
+                }
+            }
+
+            if (!symbolFirstSet.includes('#')) {
+                break;
+            }
+        }
+    }
+
+    return firstSet;
+}
+
+function generateTable(grammar) {
+    const parsingTable = {};
+  
+    for (const nonTerminal in grammar) {
       if (grammar.hasOwnProperty(nonTerminal)) {
         const productions = grammar[nonTerminal];
   
-        // Verificar si hay ambigüedad en los conjuntos First de las producciones
-        const firstSetsOfProductions = productions.map(production => calculateProductionFirstSet(production, firstSets));
-        const unionOfFirstSets = new Set();
-  
-        for (const firstSet of firstSetsOfProductions) {
-          for (const symbol of firstSet) {
-            if (unionOfFirstSets.has(symbol)) {
-              // Hay intersección en los conjuntos First de las producciones
-              return false;
-            }
-            unionOfFirstSets.add(symbol);
-          }
-        }
-  
         for (const production of productions) {
-          const productionFirstSet = calculateProductionFirstSet(production, firstSets);
+          const firstSet = calculateProductionFirstSet(production, firstSets);
   
-          if (productionFirstSet.has('#')) {
+          for (const terminal of firstSet) {
+            if (terminal !== '#') {
+              if (!parsingTable.hasOwnProperty(nonTerminal)) {
+                parsingTable[nonTerminal] = {};
+              }
+              parsingTable[nonTerminal][terminal] = production;
+            }
+          }
+  
+          if (firstSet.has('#')) {
             const followSet = followSets[nonTerminal];
-            const intersection = new Set([...productionFirstSet].filter(x => followSet.has(x)));
   
-            if (intersection.size > 0) {
-              // Hay intersección entre el conjunto First de una producción y el conjunto Follow del símbolo no terminal
-              return false;
+            for (const terminal of followSet) {
+              if (!parsingTable.hasOwnProperty(nonTerminal)) {
+                parsingTable[nonTerminal] = {};
+              }
+              parsingTable[nonTerminal][terminal] = production;
             }
           }
         }
       }
     }
   
-    return true;
+    return parsingTable;
   }
   
-  function calculateProductionFirstSet(production, firstSets) {
-    const firstSet = new Set();
-  
-    for (const symbol of production) {
-      if (isTerminal(symbol)) {
-        firstSet.add(symbol);
-        break;
-      } else {
-        const symbolFirstSet = firstSets[symbol];
-  
-        for (const symbol of symbolFirstSet) {
-          if (symbol !== '#') {
-            firstSet.add(symbol);
-          }
-        }
-  
-        if (!symbolFirstSet.includes('#')) {
-          break;
-        }
-      }
-    }
-  
-    return firstSet;
-  }
 
 
 function showFirstSets(set) {
@@ -408,9 +447,62 @@ function showIsll1(isLl1) {
     } else {
         resultDiv.innerHTML = "<p style='color: red'>No es LL(1)<p>";
     }
-
-
 }
+  
+function showTable(table) {
+    const tableResult = document.getElementById('tableResult');
+  
+    // Crear la estructura de la tabla
+    const tableElement = document.createElement('table');
+    tableElement.classList.add('ll1-table');
+  
+    // Obtener los no terminales y terminales
+    const nonTerminals = Object.keys(table);
+    const terminals = new Set();
+  
+    for (const nonTerminal in table) {
+      const productions = table[nonTerminal];
+      Object.keys(productions).forEach((terminal) => {
+        terminals.add(terminal);
+      });
+    }
+  
+    // Crear la primera fila de terminales
+    const terminalsRow = document.createElement('tr');
+    terminalsRow.appendChild(createTableCell(''));
+  
+    for (const terminal of terminals) {
+      terminalsRow.appendChild(createTableCell(terminal));
+    }
+  
+    // Agregar la primera fila de terminales a la tabla
+    tableElement.appendChild(terminalsRow);
+  
+    // Crear las filas con las producciones correspondientes
+    for (const nonTerminal of nonTerminals) {
+      const productionsRow = document.createElement('tr');
+      productionsRow.appendChild(createTableCell(nonTerminal));
+  
+      for (const terminal of terminals) {
+        const production = table[nonTerminal][terminal] || '';
+        productionsRow.appendChild(createTableCell(production));
+      }
+  
+      // Agregar la fila de producciones a la tabla
+      tableElement.appendChild(productionsRow);
+    }
+  
+    // Limpiar el contenedor y agregar la tabla
+    tableResult.innerHTML = '';
+    tableResult.appendChild(tableElement);
+  }
+  
+  function createTableCell(content) {
+    const cell = document.createElement('td');
+    cell.textContent = content;
+    return cell;
+  }
+    
 
 // function resetGrammar(){
 //     document.getElementById("followResult").innerHTML = "";
@@ -448,14 +540,26 @@ function followButton() {
 
 function ll1Button() {
     if (haveDoneFollowSets) {
-        let grammar = readGrammar();
+        let grammar = grammarFixed;
         let startSymbol = getStartSymbol();
         let newIsLl1 = isLL1Grammar(grammar, startSymbol, firstSets, followSets);
         showIsll1(newIsLl1);
         isLl1 = newIsLl1;
-        haveDoneFollowSets = true;
+        haveDoneValidation = true;
     } else {
         alert("Debes calcular los conjuntos First y Follow para saber si la gramatica es LL(1)");
+    }
+}
+
+function tableButton() {
+    if (isLl1) {
+        let grammar = readGrammar();
+        let newTable = generateTable(grammar);
+        showTable(newTable);
+    } else if(!haveDoneValidation) {
+        alert("Debes validar si la gramatica es LL(1) primero");
+    } else {
+        alert("La gramatica no es LL(1)");
     }
 }
 

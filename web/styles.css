@@ -1,0 +1,19 @@
+#tableResult table {
+  width: 50%;
+  border-collapse: collapse;
+}
+
+#tableResult th,
+#tableResult td {
+  padding: 8px;
+  text-align: left;
+  border: 1px solid black;
+}
+
+#tableResult th:first-child {
+  background-color: #f2f2f2;
+}
+
+#tableResult tr:nth-child(even) {
+  background-color: #e6e6e6;
+}
