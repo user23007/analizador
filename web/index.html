@@ -1,23 +1,30 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Conjunto First</title>
   <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
+
 <body>
   <h1>Conjunto First</h1>
-  <div class="container">
+  <div class="container" id="form">
     <label for="grammar">Gramática:</label>
     <textarea id="grammar" rows="5"></textarea>
     <button onclick="firstButton()">Calcular First</button>
     <button onclick="followButton()">Calcular Follow</button>
-    <label for="inputString">Cadena:</label>
-    <input type="text" id="inputString">
+    <button onclick="ll1Button()">Verificar LL(1)</button>
+    <!-- <label for="inputString">Cadena:</label>
+    <input type="text" id="inputString"> -->
   </div>
-  <div id="firstResult"></div>
-  <br />
-  <div id="followResult"></div>
-  
+  <div class="container" id="results">
+    <div id="firstResult"></div>
+    <br />
+    <div id="followResult"></div>
+    <div id="isLl1Result"></div>
+  </div>
+
   <script src="script.js"></script>
 </body>
+
 </html>

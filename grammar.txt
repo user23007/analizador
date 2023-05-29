@@ -1,8 +1,4 @@
-E~TL
-L~+TL
-L~`
-T~FK
-K~*FK
-K~`
-F~i
-F~(E)
+S~AS
+A~SA
+S~b
+A~a
