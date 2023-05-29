@@ -454,6 +454,75 @@ function analyzeString(input, grammar, startSymbol, parsingTable) {
     return inputIndex === input.length;
 }
 
+function item0Set(grammar) {
+    var productionStrings = {};
+  
+    let firstNonTerminal = Object.keys(grammar)[0]; // Obtener el primer no terminal
+    let auxProductionString = "." + firstNonTerminal;
+    let newWord = firstNonTerminal + "'";
+    productionStrings[newWord] = auxProductionString;
+  
+    for (const nonTerminal in grammar) {
+      if (grammar.hasOwnProperty(nonTerminal)) {
+        const productions = grammar[nonTerminal];
+        const productionStringsForNonTerminal = [];
+  
+        for (let i = 0; i < productions.length; i++) {
+          const production = productions[i];
+          let productionString = "";
+  
+          if (production === "#") {
+            productionString += " ."; // Producción con epsilon
+          } else {
+            productionString += "." + production; // A > .Eb
+          }
+  
+          productionStringsForNonTerminal.push(productionString); // Guardando A > .Eb
+        }
+  
+        productionStrings[nonTerminal] = productionStringsForNonTerminal;
+      }
+    }
+  
+    return productionStrings;
+  }
+  
+  
+  function goto(I, X) {
+    const gotoSet = [];
+  
+    for (let i = 0; i < I.length; i++) {
+      const item = I[i];
+      const indexDot = item.indexOf(".");
+  
+      if (indexDot !== item.length - 1) {
+        const newValue = item.substring(0, indexDot) + X + "." + item.substring(indexDot + 1);
+        gotoSet.push(newValue);
+      }
+    }
+  
+    return gotoSet;
+  }
+  
+  function gotoSet(item0) {
+    let gotoSet = {};
+    gotoSet.I0 = item0;
+    let contador = 0;
+  
+    for (const item in item0) {
+      let strItem0 = item0[item];
+      for (const symbol in strItem0) {
+        if (goto(item0[item], symbol).length > 0) {
+          contador = contador + 1;
+          let name = "I" + contador;
+  
+          gotoSet[name] = goto(item0[item], symbol);
+        }
+      }
+    }
+  
+    return gotoSet;
+  }
 
 function showFirstSets(set) {
     let resultDiv = document.getElementById("firstResult");
@@ -556,6 +625,20 @@ function showAnalyzeString(isValid) {
     }
 }
 
+function showItem0(set) {
+    let item0Result = document.getElementById("item0Result");
+    item0Result.innerHTML = "";
+  
+    for (const nonTerminal in set) {
+      item0Result.innerHTML += "<p>" + nonTerminal + " > " + set[nonTerminal] + "</p>";
+    }
+  }
+
+  function showGoto(set) {
+    let resultDiv = document.getElementById("gotoResult");
+    resultDiv.innerHTML = JSON.stringify(set);
+  }
+
 
 document.getElementById("grammar-input").addEventListener("input", function () {
     firstSets = {};
@@ -646,6 +729,21 @@ function stringButton() {
         alert("Debes crear la tabla de LL(1) primero");
     }
 }
+
+function item0Button() {
+    let grammar = readGrammar();
+    let set = item0Set(grammar);
+    showItem0(set);
+  }
+  
+  function gotoButton() {
+    let grammar = readGrammar();
+    let item0 = item0Set(grammar);
+    let item0Response = gotoSet(item0);
+    showGoto(item0Response);
+  }
+
+
 
 
 
