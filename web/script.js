@@ -207,84 +207,74 @@ function calculateFollowSets(grammar, startSymbol) {
     return followSets;
 }
 
-function calculateFollowSet(symbol, grammar, followSets, startSymbol, processedNonTerminals = []) {
-    // Verificar si el símbolo ya fue calculado
+function calculateFollowSet(symbol, grammar, followSets, startSymbol, processedSymbols = []) {
     if (followSets.hasOwnProperty(symbol)) {
         return;
     }
 
     const followSet = [];
 
-    // Marcar el símbolo actual como procesado para evitar bucles infinitos
-    processedNonTerminals.push(symbol);
+    processedSymbols.push(symbol);
 
-    // Recorrer todas las producciones de la gramática
     for (const nonTerminal in grammar) {
         if (grammar.hasOwnProperty(nonTerminal)) {
             const productions = grammar[nonTerminal];
 
-            // Recorrer cada producción para buscar el símbolo en cuestión
             for (const production of productions) {
-                const symbolIndex = production.indexOf(symbol);
+                const symbolIndices = findAllOccurrences(production, symbol);
 
-                // Si el símbolo no está presente en la producción, continuar con la siguiente producción
-                if (symbolIndex === -1) {
-                    continue;
-                }
-
-                // Si el símbolo está al final de la producción
-                if (symbolIndex === production.length - 1) {
-                    // Si el no terminal de la producción ya fue procesado, omitir su cálculo de Follow
-                    if (processedNonTerminals.includes(nonTerminal)) {
-                        continue;
-                    }
-
-                    // Calcular el conjunto Follow del no terminal de la producción
-                    calculateFollowSet(nonTerminal, grammar, followSets, startSymbol, processedNonTerminals);
-                    const followOfNonTerminal = followSets[nonTerminal];
-
-                    // Agregar los símbolos del conjunto Follow del no terminal al conjunto Follow del símbolo actual
-                    for (const followSymbol of followOfNonTerminal) {
-                        if (!followSet.includes(followSymbol)) {
-                            followSet.push(followSymbol);
+                for (const symbolIndex of symbolIndices) {
+                    if (symbolIndex === production.length - 1) {
+                        const productionNonTerminal = nonTerminal + ' -> ' + production;
+                        if (processedSymbols.includes(productionNonTerminal)) {
+                            continue;
                         }
-                    }
-                }
-                // Si el símbolo no está al final de la producción
-                else {
-                    const nextSymbol = production[symbolIndex + 1];
 
-                    // Si el siguiente símbolo es un terminal, agregarlo al conjunto Follow del símbolo actual
-                    if (isTerminal(nextSymbol)) {
-                        if (!followSet.includes(nextSymbol)) {
-                            followSet.push(nextSymbol);
-                        }
-                    }
-                    // Si el siguiente símbolo es un no terminal, calcular su conjunto First
-                    // y agregar los símbolos excepto el símbolo de epsilon (#) al conjunto Follow del símbolo actual
-                    else if (grammar.hasOwnProperty(nextSymbol)) {
-                        calculateFirstSet(nextSymbol, grammar, {});
+                        calculateFollowSet(nonTerminal, grammar, followSets, startSymbol, processedSymbols.concat(productionNonTerminal));
+                        const followOfNonTerminal = followSets[nonTerminal];
 
-                        for (const firstSymbol of firstSets[nextSymbol]) {
-                            if (firstSymbol !== '#' && !followSet.includes(firstSymbol)) {
-                                followSet.push(firstSymbol);
+                        for (const followSymbol of followOfNonTerminal) {
+                            if (!followSet.includes(followSymbol)) {
+                                followSet.push(followSymbol);
                             }
                         }
+                    } else {
+                        let nextSymbol = production[symbolIndex + 1];
+                        let epsilonFound = false;
 
-                        // Si el conjunto First del siguiente símbolo contiene el símbolo de epsilon (#),
-                        // agregar el conjunto Follow del símbolo no terminal al conjunto Follow del símbolo actual
-                        if (firstSets[nextSymbol].includes('#')) {
-                            // Evitar ciclos infinitos al calcular el conjunto Follow del símbolo actual
-                            if (!processedNonTerminals.includes(nonTerminal) && nonTerminal !== startSymbol) {
-                                calculateFollowSet(nonTerminal, grammar, followSets, startSymbol, processedNonTerminals);
-                                const followOfNonTerminal = followSets[nonTerminal];
+                        while (nextSymbol) {
+                            if (isTerminal(nextSymbol)) {
+                                if (!followSet.includes(nextSymbol)) {
+                                    followSet.push(nextSymbol);
+                                }
+                                break;
+                            } else if (grammar.hasOwnProperty(nextSymbol)) {
+                                calculateFirstSet(nextSymbol, grammar, {});
 
-                                // Agregar los símbolos del conjunto Follow del no terminal al conjunto Follow del símbolo actual
-                                for (const followSymbol of followOfNonTerminal) {
-                                    if (!followSet.includes(followSymbol)) {
-                                        followSet.push(followSymbol);
+                                for (const firstSymbol of firstSets[nextSymbol]) {
+                                    if (firstSymbol !== '#') {
+                                        if (!followSet.includes(firstSymbol)) {
+                                            followSet.push(firstSymbol);
+                                        }
+                                    } else {
+                                        epsilonFound = true;
                                     }
                                 }
+
+                                if (!epsilonFound) {
+                                    break;
+                                }
+
+                                const nextSymbolIndex = production.indexOf(nextSymbol, symbolIndex + 1);
+                                if (nextSymbolIndex === -1) {
+                                    if (!followSet.includes(nonTerminal)) {
+                                        followSet.push(nonTerminal);
+                                    }
+                                    break;
+                                }
+                                nextSymbol = production[nextSymbolIndex + 1];
+                            } else {
+                                break;
                             }
                         }
                     }
@@ -295,16 +285,25 @@ function calculateFollowSet(symbol, grammar, followSets, startSymbol, processedN
 
     if (symbol === startSymbol && !followSet.includes('$')) {
         followSet.push('$');
-    }
-    else if (followSet.length === 0) {
+    } else if (followSet.length === 0) {
         followSet.push('$');
     }
 
-    // Almacenar el conjunto Follow del símbolo actual en el objeto followSets
     followSets[symbol] = followSet;
 
-    // Eliminar el símbolo actual de los no terminales procesados
-    processedNonTerminals.pop();
+    processedSymbols.pop();
+}
+
+function findAllOccurrences(str, substr) {
+    const indices = [];
+    let index = str.indexOf(substr);
+
+    while (index !== -1) {
+        indices.push(index);
+        index = str.indexOf(substr, index + 1);
+    }
+
+    return indices;
 }
 
 
@@ -456,73 +455,73 @@ function analyzeString(input, grammar, startSymbol, parsingTable) {
 
 function item0Set(grammar) {
     var productionStrings = {};
-  
+
     let firstNonTerminal = Object.keys(grammar)[0]; // Obtener el primer no terminal
     let auxProductionString = "." + firstNonTerminal;
     let newWord = firstNonTerminal + "'";
     productionStrings[newWord] = auxProductionString;
-  
+
     for (const nonTerminal in grammar) {
-      if (grammar.hasOwnProperty(nonTerminal)) {
-        const productions = grammar[nonTerminal];
-        const productionStringsForNonTerminal = [];
-  
-        for (let i = 0; i < productions.length; i++) {
-          const production = productions[i];
-          let productionString = "";
-  
-          if (production === "#") {
-            productionString += " ."; // Producción con epsilon
-          } else {
-            productionString += "." + production; // A > .Eb
-          }
-  
-          productionStringsForNonTerminal.push(productionString); // Guardando A > .Eb
+        if (grammar.hasOwnProperty(nonTerminal)) {
+            const productions = grammar[nonTerminal];
+            const productionStringsForNonTerminal = [];
+
+            for (let i = 0; i < productions.length; i++) {
+                const production = productions[i];
+                let productionString = "";
+
+                if (production === "#") {
+                    productionString += " ."; // Producción con epsilon
+                } else {
+                    productionString += "." + production; // A > .Eb
+                }
+
+                productionStringsForNonTerminal.push(productionString); // Guardando A > .Eb
+            }
+
+            productionStrings[nonTerminal] = productionStringsForNonTerminal;
         }
-  
-        productionStrings[nonTerminal] = productionStringsForNonTerminal;
-      }
     }
-  
+
     return productionStrings;
-  }
-  
-  
-  function goto(I, X) {
+}
+
+
+function goto(I, X) {
     const gotoSet = [];
-  
+
     for (let i = 0; i < I.length; i++) {
-      const item = I[i];
-      const indexDot = item.indexOf(".");
-  
-      if (indexDot !== item.length - 1) {
-        const newValue = item.substring(0, indexDot) + X + "." + item.substring(indexDot + 1);
-        gotoSet.push(newValue);
-      }
+        const item = I[i];
+        const indexDot = item.indexOf(".");
+
+        if (indexDot !== item.length - 1) {
+            const newValue = item.substring(0, indexDot) + X + "." + item.substring(indexDot + 1);
+            gotoSet.push(newValue);
+        }
     }
-  
+
     return gotoSet;
-  }
-  
-  function gotoSet(item0) {
+}
+
+function gotoSet(item0) {
     let gotoSet = {};
     gotoSet.I0 = item0;
     let contador = 0;
-  
+
     for (const item in item0) {
-      let strItem0 = item0[item];
-      for (const symbol in strItem0) {
-        if (goto(item0[item], symbol).length > 0) {
-          contador = contador + 1;
-          let name = "I" + contador;
-  
-          gotoSet[name] = goto(item0[item], symbol);
+        let strItem0 = item0[item];
+        for (const symbol in strItem0) {
+            if (goto(item0[item], symbol).length > 0) {
+                contador = contador + 1;
+                let name = "I" + contador;
+
+                gotoSet[name] = goto(item0[item], symbol);
+            }
         }
-      }
     }
-  
+
     return gotoSet;
-  }
+}
 
 function showFirstSets(set) {
     let resultDiv = document.getElementById("firstResult");
@@ -628,16 +627,16 @@ function showAnalyzeString(isValid) {
 function showItem0(set) {
     let item0Result = document.getElementById("item0Result");
     item0Result.innerHTML = "";
-  
-    for (const nonTerminal in set) {
-      item0Result.innerHTML += "<p>" + nonTerminal + " > " + set[nonTerminal] + "</p>";
-    }
-  }
 
-  function showGoto(set) {
+    for (const nonTerminal in set) {
+        item0Result.innerHTML += "<p>" + nonTerminal + " > " + set[nonTerminal] + "</p>";
+    }
+}
+
+function showGoto(set) {
     let resultDiv = document.getElementById("gotoResult");
     resultDiv.innerHTML = JSON.stringify(set);
-  }
+}
 
 
 document.getElementById("grammar-input").addEventListener("input", function () {
@@ -660,7 +659,7 @@ document.getElementById("grammar-input").addEventListener("input", function () {
     document.getElementById("ll1-validation-result").innerHTML = "";
     document.getElementById("followResult").innerHTML = "";
     document.getElementById("firstResult").innerHTML = "";
-    document.getElementById("item0Result").innerHTML = "";git
+    document.getElementById("item0Result").innerHTML = "";
 });
 
 
@@ -735,14 +734,14 @@ function item0Button() {
     let grammar = readGrammar();
     let set = item0Set(grammar);
     showItem0(set);
-  }
-  
-  function gotoButton() {
+}
+
+function gotoButton() {
     let grammar = readGrammar();
     let item0 = item0Set(grammar);
     let item0Response = gotoSet(item0);
     showGoto(item0Response);
-  }
+}
 
 
 
